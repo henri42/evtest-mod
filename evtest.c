@@ -1114,10 +1114,20 @@ static int print_events(int fd)
 	int i, rd;
 	fd_set rdfs;
 
+	FILE *timefile;
+
+
 	FD_ZERO(&rdfs);
 	FD_SET(fd, &rdfs);
 
 	while (!stop) {
+
+		timefile = fopen("time_record_ice", "ab");
+		if (timefile == NULL) {
+			perror("fopen");
+			return(EXIT_FAILURE);
+		}
+
 		select(fd + 1, &rdfs, NULL, NULL, NULL);
 		if (stop)
 			break;
@@ -1137,6 +1147,11 @@ static int print_events(int fd)
 
 			printf("Event: time %ld.%06ld, ", ev[i].time.tv_sec, ev[i].time.tv_usec);
 
+			if (type == EV_KEY) {
+				fprintf(timefile, "%ld\n", ev[i].time.tv_sec);
+				fprintf(timefile, "%06ld\n", ev[i].time.tv_usec);				
+			}
+
 			if (type == EV_SYN) {
 				if (code == SYN_MT_REPORT)
 					printf("++++++++++++++ %s ++++++++++++\n", codename(type, code));
@@ -1154,6 +1169,8 @@ static int print_events(int fd)
 					printf("value %d\n", ev[i].value);
 			}
 		}
+
+		fclose(timefile);
 
 	}
 
